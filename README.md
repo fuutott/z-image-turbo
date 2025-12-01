@@ -1,7 +1,7 @@
 # changes from Aaryan-Kapoor/z-image-turbo
-FP8 default
-Select GPU option in settings
-MCP server as part of backend
+- FP8 default
+- Select GPU option in settings
+- MCP server as part of backend
 
 # Z-Image-Turbo
 

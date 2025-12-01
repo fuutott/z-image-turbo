@@ -276,7 +276,7 @@ async def list_tools() -> list[types.Tool]:
     return [
         types.Tool(
             name="generate-image",
-            description="Generate an image based on a text prompt",
+            description="Generate an image based on a text prompt.",
             inputSchema={
                 "type": "object",
                 "required": ["prompt"],
