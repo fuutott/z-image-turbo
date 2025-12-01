@@ -32,7 +32,11 @@
    # Linux/Mac
    source venv/bin/activate
    
+   # Standard installation
    pip install -r requirements.txt
+
+   # OR for CUDA 12.1 (Recommended for NVIDIA GPUs)
+   pip install -r requirements-cuda.txt
    ```
 
 3. **Frontend Setup**

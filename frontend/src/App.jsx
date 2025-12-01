@@ -21,6 +21,9 @@ function App() {
   const [loading, setLoading] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [modelPath, setModelPath] = useState('')
+  const [availableGpus, setAvailableGpus] = useState([])
+  const [selectedGpu, setSelectedGpu] = useState(0)
+  const [fp8Quantization, setFp8Quantization] = useState(false)
   const [settings, setSettings] = useState({
     steps: 8,
     guidance_scale: 0.0,
@@ -35,8 +38,17 @@ function App() {
       .then(res => res.json())
       .then(data => {
         if (data.cache_dir) setModelPath(data.cache_dir)
+        if (data.gpu_device !== undefined) setSelectedGpu(data.gpu_device)
+        if (data.fp8_quantization !== undefined) setFp8Quantization(data.fp8_quantization)
       })
       .catch(err => console.error("Failed to fetch settings", err))
+
+    fetch('http://localhost:8000/system-info')
+      .then(res => res.json())
+      .then(data => {
+        if (data.gpus) setAvailableGpus(data.gpus)
+      })
+      .catch(err => console.error("Failed to fetch system info", err))
   }, [])
 
   const generate = async () => {
@@ -68,7 +80,7 @@ function App() {
       const res = await fetch('http://localhost:8000/settings/model-path', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cache_dir: modelPath })
+        body: JSON.stringify({ cache_dir: modelPath, gpu_device: selectedGpu, fp8_quantization: fp8Quantization })
       })
       if (res.ok) {
         setShowSettings(false)
@@ -157,6 +169,54 @@ function App() {
                 </div>
                 <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                   Leave empty to use default Hugging Face cache. Changing this will trigger a model reload.
+                </p>
+              </div>
+
+              {availableGpus.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <label style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-secondary)' }}>
+                    GPU Selection
+                  </label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {availableGpus.map((gpu) => (
+                      <label key={gpu.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                        <input
+                          type="radio"
+                          name="gpu_selection"
+                          value={gpu.id}
+                          checked={selectedGpu === gpu.id}
+                          onChange={() => setSelectedGpu(gpu.id)}
+                          style={{ accentColor: 'var(--primary)' }}
+                        />
+                        <span style={{ fontSize: '14px', color: 'var(--text-primary)' }}>
+                          {gpu.name} (ID: {gpu.id})
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                  <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                    Select the GPU to use for inference.
+                  </p>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <label style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-secondary)' }}>
+                  Optimization
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={fp8Quantization}
+                    onChange={(e) => setFp8Quantization(e.target.checked)}
+                    style={{ accentColor: 'var(--primary)' }}
+                  />
+                  <span style={{ fontSize: '14px', color: 'var(--text-primary)' }}>
+                    Enable FP8 Quantization (optimum-quanto)
+                  </span>
+                </label>
+                <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                  Quantizes model to FP8 for lower VRAM usage. First run will take longer to quantize and save the model.
                 </p>
               </div>
             </div>
