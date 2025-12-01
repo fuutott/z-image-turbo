@@ -21,6 +21,12 @@ except ImportError:
     print("optimum-quanto not installed. Quantization features will be unavailable.")
     quantize = None
 
+try:
+    import onnxruntime as ort
+    ONNX_AVAILABLE = True
+except ImportError:
+    ONNX_AVAILABLE = False
+
 import torch
 import io
 import base64
@@ -69,7 +75,8 @@ def load_config():
         "model_id": "Tongyi-MAI/Z-Image-Turbo",
         "gpu_device": 1,
         "cpu_offload": True,
-        "fp8_quantization": True
+        "fp8_quantization": True,
+        "optimization_target": "auto" # auto, cuda, cpu, ryzen_npu, directml
     }
 
 def save_config(config):
@@ -95,10 +102,47 @@ pipe = None
 def get_pipeline():
     global pipe
     if pipe is None:
+        target = model_config.get("optimization_target", "auto")
+        
+        # Auto-resolution
+        if target == "auto":
+            if torch.cuda.is_available():
+                target = "cuda"
+            elif ONNX_AVAILABLE and "DmlExecutionProvider" in ort.get_available_providers():
+                target = "directml"
+            else:
+                target = "cpu"
+        
+        print(f"Initializing pipeline with target: {target}")
+
+        if target in ["ryzen_npu", "directml"]:
+            if not ONNX_AVAILABLE:
+                 raise HTTPException(status_code=500, detail="ONNX Runtime not installed.")
+            
+            provider = "VitisAIExecutionProvider" if target == "ryzen_npu" else "DmlExecutionProvider"
+            
+            if provider not in ort.get_available_providers():
+                 print(f"Warning: {provider} not found in available providers: {ort.get_available_providers()}")
+            
+            print(f"Loading ONNX model {model_config['model_id']} with provider {provider}...")
+            try:
+                from optimum.onnxruntime import ORTPipelineForTextToImage
+                pipe = ORTPipelineForTextToImage.from_pretrained(
+                    model_config['model_id'],
+                    provider=provider,
+                    export=True,
+                    cache_dir=model_config['cache_dir'] if model_config['cache_dir'] else None
+                )
+                print(f"ONNX Model loaded on {provider}")
+                return pipe
+            except Exception as e:
+                print(f"Error loading ONNX model: {e}")
+                print("Falling back to standard PyTorch pipeline...")
+        
         if ZImagePipeline is None:
             raise HTTPException(status_code=500, detail="ZImagePipeline class not available. Install diffusers from source.")
             
-        print(f"Loading model {model_config['model_id']}...")
+        print(f"Loading PyTorch model {model_config['model_id']}...")
         
         if model_config['cache_dir']:
             print(f"Using cache directory: {model_config['cache_dir']}")
@@ -125,7 +169,7 @@ def get_pipeline():
             dtype = torch.bfloat16 if "cuda" in device else torch.float32
             
             should_quantize = model_config.get("fp8_quantization", False)
-            if should_quantize and quantize is not None:
+            if should_quantize and quantize is not None and device != "cpu":
                 print("Quantization enabled. Loading original model and quantizing...")
                 pipe = ZImagePipeline.from_pretrained(
                     model_config['model_id'],
@@ -170,6 +214,7 @@ class SettingsRequest(BaseModel):
     cpu_offload: bool = False
     gpu_device: int = 0
     fp8_quantization: bool = False
+    optimization_target: str = "auto"
 
 @app.post("/settings/model-path")
 async def set_model_path(req: SettingsRequest):
@@ -182,6 +227,7 @@ async def set_model_path(req: SettingsRequest):
         model_config["cpu_offload"] = req.cpu_offload
         model_config["gpu_device"] = req.gpu_device
         model_config["fp8_quantization"] = req.fp8_quantization
+        model_config["optimization_target"] = req.optimization_target
         save_config(model_config)
         # Force reload of the pipeline
         pipe = None
@@ -198,7 +244,12 @@ def get_system_info():
                 "id": i,
                 "name": torch.cuda.get_device_name(i)
             })
-    return {"gpus": gpus}
+    
+    onnx_providers = []
+    if ONNX_AVAILABLE:
+        onnx_providers = ort.get_available_providers()
+
+    return {"gpus": gpus, "onnx_providers": onnx_providers}
 
 @app.get("/settings")
 async def get_settings():
