@@ -72,6 +72,7 @@ Open **`http://localhost:5173`** in your browser and start generating!
 - **Fine Control** — Sliders for dimensions, inference steps, guidance scale, and seed
 - **Real-time Progress** — Live generation tracking
 - **Flexible Deployment** — Custom model cache directory, CPU offload option
+- **MCP Support** — Native Model Context Protocol integration for AI agents
 
 ### Model (Z-Image-Turbo)
 - **⚡ Lightning Fast** — Optimized for **8-step generation**, achieving sub-second latency on enterprise GPUs.
@@ -81,7 +82,7 @@ Open **`http://localhost:5173`** in your browser and start generating!
 - **🌐 Bilingual Mastery** — Exceptional rendering of text in both **English and Chinese**.
 - **🎨 Versatile & Uncensored** — From photorealism to anime, handling complex concepts without censorship.
 - **📐 High Fidelity** — Native support for resolutions up to **2MP** (e.g., 1024x1536, 1440x1440).
-- **💾 Efficient** — 6B parameters, comfortably fitting in 16GB VRAM (consumer-friendly).
+- **💾 Efficient** — 6B parameters, comfortably fitting in 16GB VRAM (fully loaded on GPU) using default FP8 quantization.
 
 ---
 
@@ -94,7 +95,7 @@ Z-Image-Turbo represents a significant leap in efficient generative AI:
 *   **VAE**: Flux Autoencoder
 *   **Training Method**: Distilled from Z-Image using DMDR (DMD + RL)
 *   **Inference**: 8 NFEs (Number of Function Evaluations) default
-*   **Precision**: Optimized for bfloat16 / fp8
+*   **Precision**: Optimized for bfloat16 / fp8 (Default)
 
 ---
 
@@ -125,4 +126,13 @@ This project is open-source under the Apache 2.0 License.
 - **Model:** [Tongyi-MAI/Z-Image-Turbo](https://huggingface.co/Tongyi-MAI/Z-Image-Turbo) by Alibaba Group
 - **UI Framework:** React + Vite
 - **Backend:** FastAPI + Diffusers
+
+## 🔌 Model Context Protocol (MCP)
+
+This server implements the [Model Context Protocol](https://modelcontextprotocol.io/), allowing AI agents (like Claude Desktop or other MCP clients) to directly control the image generation.
+
+- **Endpoint**: `http://localhost:8000/mcp` (Streamable HTTP)
+- **Tools**:
+  - `generate-image`: Generates an image from a text prompt.
+    - Arguments: `prompt` (string), `height` (int), `width` (int), `steps` (int), `guidance_scale` (float), `seed` (int)
 
