@@ -1,6 +1,6 @@
 import subprocess
 import sys
-
+# https://www.amd.com/en/resources/support-articles/release-notes/RN-AMDGPU-WINDOWS-PYTORCH-7-1-1.html
 def detect_supported_hardware():
     """
     Detects if a supported AMD GPU or Ryzen AI Processor is present on Windows.
