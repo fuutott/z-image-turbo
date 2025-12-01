@@ -1,3 +1,8 @@
+# changes from Aaryan-Kapoor/z-image-turbo
+FP8 default
+Select GPU option in settings
+MCP server as part of backend
+
 # Z-Image-Turbo
 
 > A professional web interface for the Tongyi-MAI Z-Image-Turbo model — lightning-fast text-to-image generation with 6B parameters.
