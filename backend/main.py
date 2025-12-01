@@ -68,8 +68,8 @@ def load_config():
         "cache_dir": "",
         "model_id": "Tongyi-MAI/Z-Image-Turbo",
         "gpu_device": 1,
-        "cpu_offload": False,
-        "fp8_quantization": False
+        "cpu_offload": True,
+        "fp8_quantization": True
     }
 
 def save_config(config):
@@ -87,7 +87,7 @@ model_config = load_config()
 if "cpu_offload" not in model_config:
     model_config["cpu_offload"] = False
 if "fp8_quantization" not in model_config:
-    model_config["fp8_quantization"] = False
+    model_config["fp8_quantization"] = True
 
 # Global variable for the pipeline
 pipe = None
