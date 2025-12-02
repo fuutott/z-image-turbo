@@ -308,7 +308,11 @@ async def call_tool(name: str, arguments: dict) -> list[types.ContentBlock]:
                 types.ImageContent(
                     type="image",
                     data=img_base64,
-                    mimeType="image/png"
+                    mimeType="image/png",
+                    annotations={
+                        "audience": ["user"],
+                        "priority": 1.0
+                    }
                 )
             ]
         except Exception as e:
