@@ -29,3 +29,5 @@ Thumbs.db
 config.json
 backend/models--Tongyi-MAI--Z-Image-Turbo/
 backend/output/
+frontend/package-lock.json
+

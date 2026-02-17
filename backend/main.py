@@ -282,11 +282,11 @@ async def list_tools() -> list[types.Tool]:
                 "required": ["prompt"],
                 "properties": {
                     "prompt": {"type": "string", "description": "The text prompt to generate the image from"},
-                    "height": {"type": "integer", "default": 1024, "description": "Height of the image"},
-                    "width": {"type": "integer", "default": 1024, "description": "Width of the image"},
-                    "steps": {"type": "integer", "default": 8, "description": "Number of inference steps"},
-                    "guidance_scale": {"type": "number", "default": 0.0, "description": "Guidance scale"},
-                    "seed": {"type": "integer", "default": -1, "description": "Random seed"}
+                    "height": {"type": "integer", "default": 1088, "description": "Height of the image"},
+                    "width": {"type": "integer", "default": 1920, "description": "Width of the image"},
+                    "steps": {"type": "integer", "default": 8, "description": "Number of inference steps. 8 gives best results."},
+                    "guidance_scale": {"type": "number", "default": 0.0, "description": "Guidance scale. 0.0 gives best results."},
+                    "seed": {"type": "integer", "default": -1, "description": "Random seed. Random is good"}
                 }
             }
         )
@@ -308,7 +308,11 @@ async def call_tool(name: str, arguments: dict) -> list[types.ContentBlock]:
                 types.ImageContent(
                     type="image",
                     data=img_base64,
-                    mimeType="image/png"
+                    mimeType="image/png",
+                    annotations={
+                        "audience": ["user"],
+                        "priority": 1.0
+                    }
                 )
             ]
         except Exception as e:
